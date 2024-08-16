@@ -114,6 +114,14 @@ const getAccessToken = () => {
 
 
 /**
+ * Get Current User's Profile
+ * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-current-users-profile
+ * @returns {Promise}
+ */
+export const getCurrentUserProfile = () => axios.get('/me');
+
+
+/**
  * Clear out all localStorage items we've set and reload the page
  * @returns {void}
  */
