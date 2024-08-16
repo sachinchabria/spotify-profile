@@ -1,13 +1,5 @@
 import axios from 'axios';
 
-/**
- * Axios global request headers
- * https://github.com/axios/axios#global-axios-defaults
- */
-axios.defaults.baseURL = 'https://api.spotify.com/v1';
-axios.defaults.headers['Authorization'] = `Bearer ${accessToken}`;
-axios.defaults.headers['Content-Type'] = 'application/json';
-
 // Map for localStorage keys
 const LOCALSTORAGE_KEYS = {
 	accessToken: 'spotify_access_token',
@@ -114,14 +106,6 @@ const getAccessToken = () => {
 
 
 /**
- * Get Current User's Profile
- * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-current-users-profile
- * @returns {Promise}
- */
-export const getCurrentUserProfile = () => axios.get('/me');
-
-
-/**
  * Clear out all localStorage items we've set and reload the page
  * @returns {void}
  */
@@ -136,3 +120,19 @@ export const logout = () => {
 
 
 export const accessToken = getAccessToken();
+
+/**
+ * Axios global request headers
+ * https://github.com/axios/axios#global-axios-defaults
+ */
+axios.defaults.baseURL = 'https://api.spotify.com/v1';
+axios.defaults.headers['Authorization'] = `Bearer ${accessToken}`;
+axios.defaults.headers['Content-Type'] = 'application/json';
+
+
+/**
+ * Get Current User's Profile
+ * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-current-users-profile
+ * @returns {Promise}
+ */
+export const getCurrentUserProfile = () => axios.get('/me');
