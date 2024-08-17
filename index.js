@@ -1,22 +1,24 @@
+require('dotenv').config()
 const express = require('express');
-const axios = require('axios');
 const querystring = require('querystring');
-const app = express();
-const port = 8888;
+const axios = require('axios');
+const path = require('path');
 
 require('dotenv').config();
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
+let REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:8888/callback';
+let FRONTEND_URI = process.env.FRONTEND_URI || 'http://localhost:3000';
+const PORT = process.env.PORT || 8888;
 
-app.get('/', (req, res) => {
-  const data = {
-    name: 'Brittany',
-    isAwesome: true,
-  };
+const app = express();
 
-  res.json(data);
+// Priority serve any static files.
+app.use(express.static(path.resolve(__dirname, './client/build')));
+
+app.get('/', function (req, res) {
+  res.render(path.resolve(__dirname, '../client/build/index.html'));
 });
 
 /**
@@ -25,69 +27,70 @@ app.get('/', (req, res) => {
  * @return {string} The generated string
  */
 const generateRandomString = length => {
-  let text = '';
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < length; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
 };
-
-
+  
+  
 const stateKey = 'spotify_auth_state';
 
 app.get('/login', (req, res) => {
-  const state = generateRandomString(16);
-  res.cookie(stateKey, state);
+    const state = generateRandomString(16);
+    res.cookie(stateKey, state);
 
-  const scope = 'user-read-private user-read-email';
+    const scope = [
+      'user-top-read',
+    ].join(' ');
 
-  const queryParams = querystring.stringify({
-    client_id: CLIENT_ID,
-    response_type: 'code',
-    redirect_uri: REDIRECT_URI,
-    state: state,
-    scope: scope,
-  });
+    const queryParams = querystring.stringify({
+      response_type: 'code',
+      client_id: CLIENT_ID,
+      scope: scope,
+      redirect_uri: REDIRECT_URI,
+      state: state
+    });
 
-  res.redirect(`https://accounts.spotify.com/authorize?${queryParams}`);
+    res.redirect(`http://accounts.spotify.com/authorize?${queryParams}`);
 });
 
 app.get('/callback', (req, res) => {
-  const code = req.query.code || null;
-
-  axios({
-    method: 'post',
-    url: 'https://accounts.spotify.com/api/token',
-    data: querystring.stringify({
-      grant_type: 'authorization_code',
-      code: code,
-      redirect_uri: REDIRECT_URI
-    }),
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      Authorization: `Basic ${new Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')}`,
-    },
-  })
-    .then(response => {
-      if (response.status === 200) {
-        const { access_token, refresh_token, expires_in } = response.data;
-
-        const queryParams = querystring.stringify({
-          access_token,
-          refresh_token,
-          expires_in,
-        });
-
-        res.redirect(`http://localhost:3000/?${queryParams}`);
-
-      } else {
-        res.redirect(`/?${querystring.stringify({ error: 'invalid_token' })}`);
-      }
+    const code = req.query.code || null;
+  
+    axios({
+      method: 'post',
+      url: 'https://accounts.spotify.com/api/token',
+      data: querystring.stringify({
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: REDIRECT_URI
+      }),
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${new Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64')}`,
+      },
     })
-    .catch(error => {
-      res.send(error);
-    });
+      .then(response => {
+        if (response.status === 200) {
+          const { refresh_token, access_token, expires_in } = response.data;
+          
+          const queryParams = querystring.stringify({
+            access_token,
+            refresh_token,
+            expires_in
+          });
+          // redirect to react app and pass along tokens and query params
+          res.redirect(`${FRONTEND_URI}/?${queryParams}`);
+        } else {
+          res.redirect(`/${querystring.stringify({ error: 'invalid_token'})}`);
+        }
+      })
+      .catch(error => {
+        res.send(error);
+      });
 });
 
 app.get('/refresh_token', (req, res) => {
@@ -113,11 +116,11 @@ app.get('/refresh_token', (req, res) => {
     });
 });
 
-app.get('/awesome-generator', (req, res) => {
-  const { name, isAwesome } = req.query;
-  res.send(`${name} is ${JSON.parse(isAwesome) ? 'really' : 'not'} awesome`);
+// All remaining requests return the React app, so it can handle routing.
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, './client/build', 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Express app listening at http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Express app listening at http://localhost:${PORT}`)
 });
