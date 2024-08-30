@@ -1,10 +1,10 @@
 # spotify-profile (NOT AVAILABLE for public use, read below to get access)
 
-Web app for visualizing personalized Spotify data. View your top artists, top tracks, recently played tracks, and detailed audio information about each track. Create and save new playlists of recommended tracks based on your existing playlists and more.
-
-## Availability
-
 This web app is currently not available for public use until Spotify approves my use of their API. However, if you are a recruiter or someone interested in demoing the app, please send me your email, and I can grant you developer access, which will allow you to use the website.
+
+## Description
+
+Web app for visualizing personalized Spotify data. View your top artists, top tracks, recently played tracks, and detailed audio information about each track. Create and save new playlists of recommended tracks based on your existing playlists and more.
 
 ## Features
 
